@@ -1,0 +1,9 @@
+node_modules/
+dist/
+safari-wrapper/
+.web-ext-artifacts/
+.vite/
+*.log
+.DS_Store
+.env
+.env.*

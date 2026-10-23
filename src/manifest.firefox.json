@@ -1,0 +1,12 @@
+{
+  "background": {
+    "scripts": ["background/index.js"],
+    "type": "module"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{6f1d2b7e-3c5a-4f0e-9b84-2a7d5e1c9a31}",
+      "strict_min_version": "115.0"
+    }
+  }
+}

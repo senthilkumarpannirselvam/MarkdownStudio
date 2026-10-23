@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 280px;
+  background: #fafaf9;
+  color: #1f1f1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  body { background: #15161a; color: #e6e6e6; }
+}
+
+.pop { padding: 14px 16px 12px; }
+.pop h1 { font-size: 1rem; margin: 0 0 10px; }
+.row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; gap: 12px; }
+.row label { font-size: 0.9rem; }
+.row select, .row input[type='checkbox'] { font: inherit; }
+footer { margin-top: 10px; }
+footer button, .pop > button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.loading { padding: 20px; text-align: center; }

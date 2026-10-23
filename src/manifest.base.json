@@ -1,0 +1,67 @@
+{
+  "manifest_version": 3,
+  "name": "Markdown Studio",
+  "description": "View and edit Markdown files in the browser, with live preview, tables that scroll, diagrams and math.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Markdown Studio",
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/index.html",
+    "open_in_tab": true
+  },
+  "permissions": ["storage"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*.md", "*://*/*.mdx", "*://*/*.mdc", "*://*/*.mkd", "*://*/*.txt", "*://*/*.markdown",
+        "*://*/*.MD", "*://*/*.MDX", "*://*/*.MDC", "*://*/*.MKD", "*://*/*.TXT", "*://*/*.MARKDOWN",
+        "*://*/*.md?*", "*://*/*.mdx?*", "*://*/*.mdc?*", "*://*/*.mkd?*", "*://*/*.txt?*", "*://*/*.markdown?*",
+        "*://*/*.MD?*", "*://*/*.MDX?*", "*://*/*.MDC?*", "*://*/*.MKD?*", "*://*/*.TXT?*", "*://*/*.MARKDOWN?*",
+        "file://*/*.md", "file://*/*.mdx", "file://*/*.mdc", "file://*/*.mkd", "file://*/*.txt", "file://*/*.markdown",
+        "file://*/*.MD", "file://*/*.MDX", "file://*/*.MDC", "file://*/*.MKD", "file://*/*.TXT", "file://*/*.MARKDOWN"
+      ],
+      "js": ["content/loader.js"],
+      "css": ["content/style.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "commands": {
+    "togglePageTheme": {
+      "description": "Toggle light / dark theme",
+      "suggested_key": { "default": "Alt+Shift+T" }
+    },
+    "toggleCentered": {
+      "description": "Toggle centered reading width",
+      "suggested_key": { "default": "Alt+Shift+C" }
+    },
+    "toggleSide": {
+      "description": "Toggle table of contents",
+      "suggested_key": { "default": "Alt+Shift+B" }
+    },
+    "toggleRefresh": {
+      "description": "Reload the file from its source",
+      "suggested_key": { "default": "Alt+Shift+R" }
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "matches": ["*://*/*", "file:///*"],
+      "resources": ["content/main.js", "assets/*", "vendor/katex/*"]
+    }
+  ]
+}
