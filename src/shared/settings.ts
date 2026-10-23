@@ -2,10 +2,14 @@ import { getSetting, setSetting } from './browser';
 
 export type Theme = 'auto' | 'light' | 'dark';
 export type FontFamily = 'system' | 'serif' | 'sans' | 'mono';
+/** full: fit the screen; wide: capped at about 120 characters; reading: a 72-character column. */
+export type PageWidth = 'full' | 'wide' | 'reading';
 
 export interface Settings {
   theme: Theme;
-  centered: boolean;
+  pageWidth: PageWidth;
+  wrapTables: boolean;
+  wrapCode: boolean;
   fontSize: number;
   fontFamily: FontFamily;
   showToc: boolean;
@@ -36,7 +40,9 @@ export const MAX_CUSTOM_CSS = 4000;
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'auto',
-  centered: true,
+  pageWidth: 'full',
+  wrapTables: true,
+  wrapCode: true,
   fontSize: 16,
   fontFamily: 'system',
   showToc: false,
@@ -65,6 +71,7 @@ export const DEFAULT_SETTINGS: Settings = {
 const STORAGE_KEY = 'settings.v1';
 const THEMES: readonly Theme[] = ['auto', 'light', 'dark'];
 const FONTS: readonly FontFamily[] = ['system', 'serif', 'sans', 'mono'];
+const WIDTHS: readonly PageWidth[] = ['full', 'wide', 'reading'];
 
 const clamp = (n: unknown, min: number, max: number, fallback: number): number =>
   typeof n === 'number' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
@@ -93,6 +100,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   }
   if (THEMES.includes(input.theme as Theme)) out.theme = input.theme as Theme;
   if (FONTS.includes(input.fontFamily as FontFamily)) out.fontFamily = input.fontFamily as FontFamily;
+  if (WIDTHS.includes(input.pageWidth as PageWidth)) out.pageWidth = input.pageWidth as PageWidth;
   out.fontSize = clamp(input.fontSize, 10, 28, DEFAULT_SETTINGS.fontSize);
   out.autosaveMs = clamp(input.autosaveMs, 0, 30000, DEFAULT_SETTINGS.autosaveMs);
   out.pollSeconds = clamp(input.pollSeconds, 2, 600, DEFAULT_SETTINGS.pollSeconds);

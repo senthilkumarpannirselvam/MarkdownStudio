@@ -32,8 +32,20 @@ function App() {
         </select>
       </div>
       <div className="row">
-        <label htmlFor="centered">Centered column</label>
-        <input id="centered" type="checkbox" checked={settings.centered} onChange={(e) => patch({ centered: e.target.checked })} />
+        <label htmlFor="width">Page width</label>
+        <select id="width" value={settings.pageWidth} onChange={(e) => patch({ pageWidth: e.target.value as Settings['pageWidth'] })}>
+          <option value="full">Fit to screen</option>
+          <option value="wide">Wide</option>
+          <option value="reading">Reading column</option>
+        </select>
+      </div>
+      <div className="row">
+        <label htmlFor="wrap-tables">Wrap table cells</label>
+        <input id="wrap-tables" type="checkbox" checked={settings.wrapTables} onChange={(e) => patch({ wrapTables: e.target.checked })} />
+      </div>
+      <div className="row">
+        <label htmlFor="wrap-code">Wrap code lines</label>
+        <input id="wrap-code" type="checkbox" checked={settings.wrapCode} onChange={(e) => patch({ wrapCode: e.target.checked })} />
       </div>
       <div className="row">
         <label htmlFor="toc">Open contents by default</label>

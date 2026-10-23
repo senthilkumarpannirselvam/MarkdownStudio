@@ -70,7 +70,10 @@ function App() {
           <input id="font-size" type="range" min={12} max={22} value={settings.fontSize}
             onChange={(e) => patch({ fontSize: Number(e.target.value) })} />
         </div>
-        <Check label="Center the reading column" value={settings.centered} onChange={(centered) => patch({ centered })} />
+        <Select label="Page width" value={settings.pageWidth} onChange={(pageWidth) => patch({ pageWidth })}
+          options={[['full', 'Fit to screen'], ['wide', 'Wide (about 120 characters)'], ['reading', 'Reading column (72 characters)']]} />
+        <Check label="Wrap long lines in table cells (turn off to scroll tables sideways)" value={settings.wrapTables} onChange={(wrapTables) => patch({ wrapTables })} />
+        <Check label="Wrap long lines in code blocks (turn off to scroll code sideways)" value={settings.wrapCode} onChange={(wrapCode) => patch({ wrapCode })} />
         <Check label="Open the table of contents by default" value={settings.showToc} onChange={(showToc) => patch({ showToc })} />
         <Check label="Show word count and reading time" value={settings.showReadingTime} onChange={(showReadingTime) => patch({ showReadingTime })} />
       </section>
@@ -157,7 +160,7 @@ function App() {
         <h2>Keyboard shortcuts</h2>
         <ul className="shortcuts">
           <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> light / dark theme</li>
-          <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> centered column</li>
+          <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> fit to screen / reading width</li>
           <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> table of contents</li>
           <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> reload the original file</li>
           <li><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> view / edit (works on the page only)</li>

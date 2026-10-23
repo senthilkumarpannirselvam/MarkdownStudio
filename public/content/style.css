@@ -34,9 +34,6 @@
   --ms-caution: #ef7f87;
 }
 
-html.ms-centered .ms-prose,
-html.ms-centered .ms-editor { margin-inline: auto; }
-
 html body.ms-root {
   margin: 0;
   padding: 0;
@@ -57,11 +54,12 @@ html[data-ms-font='mono']  body.ms-root { font-family: ui-monospace, 'JetBrains 
   grid-template-areas:
     'toolbar toolbar'
     'toc main';
-  grid-template-columns: 0 1fr;
+  /* minmax(0, 1fr) stops wide content from stretching the column past the screen. */
+  grid-template-columns: 0 minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   min-block-size: 100vh;
 }
-html.ms-toc-visible .ms-shell { grid-template-columns: 240px 1fr; }
+html.ms-toc-visible .ms-shell { grid-template-columns: 240px minmax(0, 1fr); }
 
 /* Toolbar */
 .ms-toolbar {
@@ -171,9 +169,33 @@ html.ms-toc-visible .ms-toc { display: block; }
   gap: 0;
   min-inline-size: 0;
 }
-.ms-main[data-ms-mode='view']  { grid-template-columns: 1fr; }
-.ms-main[data-ms-mode='edit']  { grid-template-columns: 1fr; }
-.ms-main[data-ms-mode='split'] { grid-template-columns: 1fr 1fr; }
+.ms-main[data-ms-mode='view'], .ms-main[data-ms-mode='edit'] { grid-template-columns: minmax(0, 1fr); }
+.ms-main[data-ms-mode='split'] {
+  grid-template-columns: minmax(0, var(--ms-split-a, 1fr)) 10px minmax(0, var(--ms-split-b, 1fr));
+}
+
+/* Draggable divider between the editor and the preview. */
+.ms-divider {
+  position: relative;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+.ms-divider::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 4px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--ms-fg) 14%, transparent);
+  transition: background-color 120ms ease, inset-inline 120ms ease;
+}
+.ms-divider:hover::after, .ms-divider:focus-visible::after, .ms-divider.ms-dragging::after {
+  inset-inline: 3px;
+  background: var(--ms-accent);
+}
+body.ms-resizing { cursor: col-resize; user-select: none; }
+body.ms-resizing .ms-editor, body.ms-resizing .ms-preview { pointer-events: none; }
 
 .ms-editor {
   min-inline-size: 0;
@@ -196,7 +218,7 @@ html.ms-toc-visible .ms-toc { display: block; }
 
 .ms-preview {
   min-inline-size: 0;
-  padding: 24px 32px 80px;
+  padding: 24px clamp(16px, 4vw, 56px) 80px;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -210,13 +232,15 @@ html.ms-panes .ms-editor .cm-editor { block-size: 100%; }
 html.ms-panes .ms-preview { overflow-y: auto; }
 html.ms-panes .ms-toc { overflow-y: auto; }
 
-.ms-prose { --ms-measure: 72ch; }
+/* Page width: --ms-measure caps text, --ms-block-measure caps tables, code and diagrams. */
+.ms-prose { --ms-measure: none; --ms-block-measure: none; overflow-wrap: anywhere; }
+html[data-ms-width='wide'] .ms-prose { --ms-measure: 120ch; --ms-block-measure: 120ch; }
+html[data-ms-width='reading'] .ms-prose { --ms-measure: 72ch; --ms-block-measure: 96ch; }
 .ms-prose > * { max-inline-size: var(--ms-measure); margin-inline: auto; }
 .ms-prose h1 { font-size: 2em; margin: 1.2em auto 0.4em; }
 .ms-prose h2 { font-size: 1.5em; margin: 1.4em auto 0.3em; }
 .ms-prose h3 { font-size: 1.2em; margin: 1.2em auto 0.3em; }
 .ms-prose h4, .ms-prose h5, .ms-prose h6 { margin: 1em auto 0.2em; }
-.ms-prose p, .ms-prose li { overflow-wrap: anywhere; word-break: normal; }
 .ms-prose a { color: var(--ms-link); }
 .ms-prose a.ms-wikilink { background: color-mix(in oklab, var(--ms-accent) 15%, transparent); padding: 0 4px; border-radius: 3px; text-decoration: none; }
 .ms-prose img { max-inline-size: 100%; block-size: auto; border-radius: 6px; }
@@ -240,14 +264,15 @@ html.ms-panes .ms-toc { overflow-y: auto; }
 .ms-prose [hidden] { display: none !important; }
 .ms-prose .ms-code {
   position: relative;
-  max-inline-size: min(96ch, 100%);
+  max-inline-size: var(--ms-block-measure);
   margin-inline: auto;
   overflow-x: auto;
   background: var(--ms-code-bg);
   padding: 14px 16px;
   border-radius: 8px;
 }
-.ms-prose .ms-code code { background: none; padding: 0; font-size: 0.9em; display: block; white-space: pre; }
+.ms-prose .ms-code code { background: none; padding: 0; font-size: 0.9em; display: block; white-space: pre; overflow-wrap: normal; }
+html.ms-wrap-code .ms-prose .ms-code code { white-space: pre-wrap; overflow-wrap: anywhere; }
 .ms-copy {
   position: absolute;
   top: 6px;
@@ -265,21 +290,26 @@ html.ms-panes .ms-toc { overflow-y: auto; }
 .ms-prose .ms-code:hover .ms-copy, .ms-copy:focus-visible { opacity: 1; }
 
 .ms-prose .ms-table-wrap {
-  max-inline-size: min(96ch, 100%);
+  max-inline-size: var(--ms-block-measure);
   margin-inline: auto;
   overflow-x: auto;
   border-radius: 8px;
   background: var(--ms-tint);
   padding: 2px;
 }
-.ms-prose table { border-collapse: collapse; margin: 0; inline-size: 100%; font-size: 0.95em; }
+.ms-prose table { border-collapse: collapse; margin: 0; font-size: 0.95em; }
 .ms-prose th, .ms-prose td {
   padding: 8px 12px;
   border-block-end: 1px solid color-mix(in oklab, var(--ms-fg) 10%, transparent);
   text-align: start;
   vertical-align: top;
-  white-space: normal;
 }
+/* Wrap: columns share the available width and cell text wraps; the box scrolls only for extreme tables. */
+html.ms-wrap-tables .ms-prose table { inline-size: 100%; }
+html.ms-wrap-tables .ms-prose th, html.ms-wrap-tables .ms-prose td { min-inline-size: 7ch; }
+/* Scroll: each row stays on one line and the table scrolls sideways inside its box. */
+html:not(.ms-wrap-tables) .ms-prose table { inline-size: max-content; min-inline-size: 100%; }
+html:not(.ms-wrap-tables) .ms-prose th, html:not(.ms-wrap-tables) .ms-prose td { white-space: nowrap; overflow-wrap: normal; }
 .ms-prose thead th {
   background: color-mix(in oklab, var(--ms-tint) 60%, var(--ms-bg));
   font-weight: 600;
@@ -348,10 +378,10 @@ html.ms-panes .ms-toc { overflow-y: auto; }
 .ms-fold-toggle:hover { color: var(--ms-fg); }
 
 /* Diagrams */
-.ms-diagram { margin: 1em auto; max-inline-size: min(96ch, 100%); overflow-x: auto; }
+.ms-diagram { margin: 1em auto; max-inline-size: var(--ms-block-measure); overflow-x: auto; }
 .ms-diagram svg { max-inline-size: 100%; block-size: auto; }
 .ms-diagram-error {
-  max-inline-size: min(96ch, 100%);
+  max-inline-size: var(--ms-block-measure);
   margin: 1em auto;
   background: color-mix(in oklab, var(--ms-caution) 15%, transparent);
   color: var(--ms-caution);
@@ -360,7 +390,7 @@ html.ms-panes .ms-toc { overflow-y: auto; }
   font-family: ui-monospace, Menlo, Consolas, monospace;
   font-size: 0.9em;
 }
-.ms-plantuml { max-inline-size: min(96ch, 100%); display: block; margin: 1em auto; }
+.ms-plantuml { max-inline-size: var(--ms-block-measure); display: block; margin: 1em auto; }
 
 /* Highlight.js */
 .hljs { background: transparent; color: inherit; }
@@ -377,13 +407,14 @@ html.ms-panes .ms-toc { overflow-y: auto; }
 
 /* Mobile */
 @media (max-width: 720px) {
-  .ms-shell { grid-template-columns: 0 1fr; }
+  .ms-shell { grid-template-columns: 0 minmax(0, 1fr); }
   html.ms-toc-visible .ms-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas: 'toolbar' 'toc' 'main';
   }
   .ms-preview { padding: 16px 18px 60px; }
-  .ms-main[data-ms-mode='split'] { grid-template-columns: 1fr; }
+  .ms-main[data-ms-mode='split'] { grid-template-columns: minmax(0, 1fr); }
+  .ms-divider { display: none; }
   .ms-format-bar { order: 3; width: 100%; justify-content: flex-start; overflow-x: auto; }
 }
 
@@ -404,3 +435,6 @@ html.ms-panes .ms-toc { overflow-y: auto; }
 .ms-toolbar button:focus-visible, .ms-fold-toggle:focus-visible, .ms-copy:focus-visible { outline: 2px solid var(--ms-accent); outline-offset: 2px; }
 .ms-toolbar button[aria-pressed="true"] { background: var(--ms-tint-strong); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* Display math scrolls instead of overflowing. */
+.ms-prose .katex-display { overflow-x: auto; overflow-y: hidden; }

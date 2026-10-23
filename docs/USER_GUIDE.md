@@ -70,11 +70,25 @@ The words and reading-time estimate appear next to the buttons.
 - **Images and links** with relative paths are resolved against the file's own location, so a local
   `![logo](images/logo.png)` shows the image sitting next to your file.
 
-### Wide content
+### Page width and wide content
 
-There is no frame around the page. Text keeps a comfortable line length, while **tables, code blocks and
-diagrams scroll sideways inside their own box** when they are too wide, so the page itself never scrolls
-sideways.
+There is no frame around the page, and it **fits your window**: text, tables and code use the available width and
+reflow when you resize the window. Long words, URLs, table cells and code lines wrap instead of running off the
+screen, so the page itself never scrolls sideways.
+
+Choose how wide the page gets in the toolbar popup or in settings:
+
+- **Fit to screen** (default): the full width of the window
+- **Wide**: capped at about 120 characters, centered
+- **Reading column**: a 72-character column, centered, easiest for long prose
+
+Two more options decide what happens to content that is wider than the page:
+
+- **Wrap table cells** (on by default): columns share the width and cell text wraps. Turn it off to keep each row on
+  one line and scroll the table sideways inside its own box.
+- **Wrap code lines** (on by default): long code lines wrap. Turn it off to scroll code sideways inside its box.
+
+Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> to switch between fit-to-screen and the reading column.
 
 ### Folding and copying
 
@@ -86,7 +100,9 @@ Click the small arrow beside a level 2 to 4 heading to fold that section. Hover 
 ### Start editing
 
 Click **Edit** or **Split**, or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> to flip between reading and
-editing. **Split** shows the editor and the rendered page side by side and keeps them scrolled together.
+editing. **Split** shows the editor and the rendered page side by side and keeps them scrolled together. Drag the bar
+between them to make either side larger or smaller (or focus it and press the left and right arrow keys). Double-click
+the bar to go back to an even split. Your choice is remembered.
 
 While editing you get:
 
@@ -135,7 +151,7 @@ download settings if you want to pick the folder each time.
 | Shortcut | Action |
 |----------|--------|
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | Light / dark theme |
-| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Centered reading column on / off |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Switch between fit-to-screen and reading width |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> | Contents panel |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> | Reload the original file (asks first if you have edits) |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> | Switch between reading and editing |
@@ -151,7 +167,7 @@ your devices through your browser account where supported, and take effect immed
 
 | Section | Options |
 |---------|---------|
-| Appearance | Theme, font, size, centered column, contents panel, reading time |
+| Appearance | Theme, font, size, page width, wrap tables and code, contents panel, reading time |
 | Rendering | Callouts, footnotes, emoji, wiki links, front matter card, copy buttons, section folding |
 | Diagrams and math | Mermaid, KaTeX, Graphviz, PlantUML and its server |
 | Editor | Open in edit mode, synchronized scrolling, minimap, autosave delay |

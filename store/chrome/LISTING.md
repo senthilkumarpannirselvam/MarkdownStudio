@@ -27,11 +27,11 @@ READING
 - Mermaid diagrams and KaTeX math
 - A contents panel, section folding and a copy button on code
 - Light and dark themes that follow your system
-- A free-flow layout: no frame around the page, and wide tables and code scroll inside their own box instead of
-  stretching the page
+- A free-flow layout that fits your window: no frame around the page, and tables and code wrap to the available width
+  (or scroll inside their own box if you prefer)
 
 EDITING
-- A full editor with view, edit and split modes and a live preview
+- A full editor with view, edit and split modes, a live preview and a draggable divider to resize the panes
 - Formatting shortcuts and a formatting bar, including a table aligner
 - Paste or drop images straight into a document
 - Drafts are saved automatically and restored when you come back

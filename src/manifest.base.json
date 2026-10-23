@@ -46,7 +46,7 @@
       "suggested_key": { "default": "Alt+Shift+T" }
     },
     "toggleCentered": {
-      "description": "Toggle centered reading width",
+      "description": "Switch between fit-to-screen and reading width",
       "suggested_key": { "default": "Alt+Shift+C" }
     },
     "toggleSide": {

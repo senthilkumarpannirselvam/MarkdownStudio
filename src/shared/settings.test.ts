@@ -9,11 +9,22 @@ describe('sanitizeSettings', () => {
   });
 
   it('keeps valid values and drops wrongly typed ones', () => {
-    const out = sanitizeSettings({ theme: 'dark', centered: false, enableEmoji: 'yes', fontFamily: 'comic' });
+    const out = sanitizeSettings({ theme: 'dark', wrapCode: false, enableEmoji: 'yes', fontFamily: 'comic' });
     expect(out.theme).toBe('dark');
-    expect(out.centered).toBe(false);
+    expect(out.wrapCode).toBe(false);
     expect(out.enableEmoji).toBe(DEFAULT_SETTINGS.enableEmoji);
     expect(out.fontFamily).toBe(DEFAULT_SETTINGS.fontFamily);
+  });
+
+  it('fits the screen and wraps tables and code by default', () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ pageWidth: 'full', wrapTables: true, wrapCode: true });
+  });
+
+  it('accepts the known page widths and rejects anything else', () => {
+    expect(sanitizeSettings({ pageWidth: 'reading' }).pageWidth).toBe('reading');
+    expect(sanitizeSettings({ pageWidth: 'wide' }).pageWidth).toBe('wide');
+    expect(sanitizeSettings({ pageWidth: '100vw' }).pageWidth).toBe('full');
+    expect(sanitizeSettings({ pageWidth: 3 }).pageWidth).toBe('full');
   });
 
   it('clamps numbers to safe ranges', () => {

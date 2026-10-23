@@ -10,6 +10,7 @@ import { parseFrontmatter, renderFrontmatterCard } from './frontmatter';
 import { renderDynamicBlocks } from './lazy';
 import { createMarkdown } from './markdown';
 import { startPolling } from './poller';
+import { initSplitter } from './splitter';
 import { computeStats, formatStats } from './stats';
 import { buildToc, type TocEntry } from './toc';
 import type { ToolbarAction } from './toolbar';
@@ -109,6 +110,7 @@ async function start(): Promise<void> {
     <aside class="ms-toc" aria-label="Table of contents"></aside>
     <main class="ms-main" data-ms-mode="view">
       <section class="ms-editor" aria-label="Editor" hidden></section>
+      <div class="ms-divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview (arrow keys, double-click to reset)" tabindex="0" hidden></div>
       <article class="ms-preview ms-prose" aria-label="Rendered Markdown"></article>
     </main>`;
   document.body.append(shell);
@@ -122,6 +124,8 @@ async function start(): Promise<void> {
   const statsEl = $('[data-role="stats"]');
   const statusEl = $('[data-role="status"]');
   const menu = $<HTMLDetailsElement>('.ms-menu');
+  const divider = $('.ms-divider');
+  await initSplitter(main, divider);
 
   const setStatus = (text: string) => void (statusEl.textContent = text);
   const clock = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -136,7 +140,9 @@ async function start(): Promise<void> {
     root.dataset.msTheme = resolveTheme();
     root.dataset.msFont = settings.fontFamily;
     root.style.setProperty('--ms-font-size', `${settings.fontSize}px`);
-    root.classList.toggle('ms-centered', settings.centered);
+    root.dataset.msWidth = settings.pageWidth;
+    root.classList.toggle('ms-wrap-tables', settings.wrapTables);
+    root.classList.toggle('ms-wrap-code', settings.wrapCode);
 
     let style = document.getElementById('ms-user-css');
     if (settings.customCss) {
@@ -270,6 +276,7 @@ async function start(): Promise<void> {
     mode = next;
     main.dataset.msMode = next;
     formatBar.hidden = next === 'view';
+    divider.hidden = next !== 'split';
     document.documentElement.classList.toggle('ms-panes', next !== 'view');
     shell
       .querySelectorAll<HTMLButtonElement>('[data-mode]')
@@ -314,10 +321,10 @@ async function start(): Promise<void> {
     renderPreview();
     void saveSettings({ theme: settings.theme }).catch(() => {});
   };
-  const toggleCentered = () => {
-    settings = { ...settings, centered: !settings.centered };
+  const toggleWidth = () => {
+    settings = { ...settings, pageWidth: settings.pageWidth === 'reading' ? 'full' : 'reading' };
     applyAppearance();
-    void saveSettings({ centered: settings.centered }).catch(() => {});
+    void saveSettings({ pageWidth: settings.pageWidth }).catch(() => {});
   };
   const reload = async () => {
     if ((unsaved || draft !== null) && !confirm('Discard your edits and reload the original file?')) return;
@@ -360,7 +367,7 @@ async function start(): Promise<void> {
     if (sender.id !== ext.runtime.id || message?.type !== 'command') return;
     const commands: Record<string, () => void | Promise<void>> = {
       togglePageTheme: toggleTheme,
-      toggleCentered,
+      toggleCentered: toggleWidth,
       toggleSide: toggleToc,
       toggleRefresh: reload,
     };
