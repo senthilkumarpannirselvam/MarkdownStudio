@@ -11,9 +11,16 @@ describe('security', () => {
     expect(html).toContain('<code class="hljs">');
   });
 
-  it('escapes raw HTML in the source', () => {
+  it('removes scripts and event handlers from raw HTML', () => {
     const html = render('<script>alert(1)</script> <img src=x onerror=alert(1)>');
-    expect(html).not.toContain('<script>');
+    expect(html).not.toContain('<script');
+    expect(html).not.toMatch(/onerror/i);
+    expect(html).toContain('<img src="x">');
+  });
+
+  it('shows raw HTML as text when the HTML setting is off', () => {
+    const html = render('<script>alert(1)</script> <img src=x onerror=alert(1)>', { allowHtml: false });
+    expect(html).not.toContain('<script');
     expect(html).not.toContain('<img');
   });
 
@@ -80,13 +87,24 @@ describe('rendering', () => {
     expect(render('one\n\ntwo').match(/<p>/g)).toHaveLength(2);
   });
 
-  it('turns a br tag into a break and leaves every other tag as text', () => {
+  it('turns a br tag into a break', () => {
     const html = render('one<br>two<br/>three<br />four');
     expect(html).toMatch(/one<br>\s*two<br>\s*three<br>\s*four/);
-    const unsafe = render('see <br class="x" onclick="alert(1)"> and <script>');
+    expect(render('`keep <br> here`')).toContain('&lt;br&gt;');
+  });
+
+  it('keeps a br tag but drops its attributes and any script next to it', () => {
+    const html = render('see <br class="x" onclick="alert(1)"> and <script>');
+    expect(html).not.toMatch(/onclick/i);
+    expect(html).not.toContain('<script');
+  });
+
+  it('with HTML off, only a plain br tag becomes a break and every other tag stays text', () => {
+    const html = render('one<br>two', { allowHtml: false });
+    expect(html).toMatch(/one<br>\s*two/);
+    const unsafe = render('see <br class="x" onclick="alert(1)"> and <script>', { allowHtml: false });
     expect(unsafe).not.toContain('<br');
     expect(unsafe).not.toContain('<script');
-    expect(render('`keep <br> here`')).toContain('&lt;br&gt;');
   });
 
   it('breaks a table cell on a br tag', () => {

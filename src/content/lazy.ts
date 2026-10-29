@@ -3,6 +3,7 @@ import plantumlEncoder from 'plantuml-encoder';
 import { ext } from '@shared/browser';
 import { escapeHtml } from '@shared/html';
 import { DEFAULT_PLANTUML_SERVER, type Settings } from '@shared/settings';
+import { notify, watchImage } from './problems';
 
 export async function renderDynamicBlocks(root: HTMLElement, settings: Settings): Promise<void> {
   const jobs: Promise<void>[] = [];
@@ -30,6 +31,19 @@ function replaceBlock(code: HTMLElement, next: HTMLElement): void {
   code.parentElement?.replaceWith(next);
 }
 
+/** Marks diagram sources that are waiting for their renderer to load. */
+function markLoading(blocks: HTMLElement[]): void {
+  blocks.forEach((code) => code.parentElement?.setAttribute('data-ms-loading', ''));
+}
+
+/** Explains why a diagram failed, above its source, which stays visible so nothing is lost. */
+function flagBlock(code: HTMLElement, kind: string, error: unknown): void {
+  const pre = code.parentElement;
+  pre?.removeAttribute('data-ms-loading');
+  pre?.before(errorBox(kind, error));
+  notify();
+}
+
 function errorBox(kind: string, error: unknown): HTMLElement {
   const box = document.createElement('div');
   box.className = `ms-diagram-error`;
@@ -45,8 +59,16 @@ let mermaidCounter = 0;
 async function renderMermaid(root: HTMLElement): Promise<void> {
   const blocks = codeBlocks(root, 'mermaid');
   if (!blocks.length) return;
-  mermaidReady ??= import('mermaid').then((m) => m.default);
-  const mermaid = await mermaidReady;
+  markLoading(blocks);
+  let mermaid: Awaited<NonNullable<typeof mermaidReady>>;
+  try {
+    mermaidReady ??= import('mermaid').then((m) => m.default);
+    mermaid = await mermaidReady;
+  } catch (error) {
+    mermaidReady = undefined;
+    blocks.filter(claimBlock).forEach((code) => flagBlock(code, 'Mermaid', error));
+    return;
+  }
   const dark = document.documentElement.dataset.msTheme === 'dark';
   mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default' });
 
@@ -58,7 +80,7 @@ async function renderMermaid(root: HTMLElement): Promise<void> {
       holder.innerHTML = (await mermaid.render(`ms-mermaid-${mermaidCounter++}`, code.textContent ?? '')).svg;
       replaceBlock(code, holder);
     } catch (error) {
-      replaceBlock(code, errorBox('Mermaid', error));
+      flagBlock(code, 'Mermaid', error);
     }
   }
 }
@@ -133,6 +155,7 @@ async function renderPlantuml(root: HTMLElement, server: string): Promise<void> 
     img.loading = 'lazy';
     img.referrerPolicy = 'no-referrer';
     img.src = `${server}/svg/${plantumlEncoder.encode(code.textContent ?? '')}`;
+    watchImage(img);
     replaceBlock(code, img);
   }
 }
@@ -159,8 +182,16 @@ export function sanitizeSvg(svg: string): string {
 async function renderGraphviz(root: HTMLElement): Promise<void> {
   const blocks = codeBlocks(root, 'dot', 'graphviz');
   if (!blocks.length) return;
-  graphvizReady ??= import('@hpcc-js/wasm/graphviz').then((m) => m.Graphviz.load());
-  const graphviz = await graphvizReady;
+  markLoading(blocks);
+  let graphviz: Awaited<NonNullable<typeof graphvizReady>>;
+  try {
+    graphvizReady ??= import('@hpcc-js/wasm/graphviz').then((m) => m.Graphviz.load());
+    graphviz = await graphvizReady;
+  } catch (error) {
+    graphvizReady = undefined;
+    blocks.filter(claimBlock).forEach((code) => flagBlock(code, 'Graphviz', error));
+    return;
+  }
 
   for (const code of blocks) {
     if (!claimBlock(code)) continue;
@@ -168,9 +199,10 @@ async function renderGraphviz(root: HTMLElement): Promise<void> {
       const holder = document.createElement('div');
       holder.className = 'ms-diagram';
       holder.innerHTML = sanitizeSvg(graphviz.dot(code.textContent ?? ''));
+      if (!holder.querySelector('svg')) throw new Error('The diagram could not be drawn');
       replaceBlock(code, holder);
     } catch (error) {
-      replaceBlock(code, errorBox('Graphviz', error));
+      flagBlock(code, 'Graphviz', error);
     }
   }
 }

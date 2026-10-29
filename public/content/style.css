@@ -460,3 +460,81 @@ html:not(.ms-wrap-tables) .ms-prose th, html:not(.ms-wrap-tables) .ms-prose td {
 
 /* Display math scrolls instead of overflowing. */
 .ms-prose .katex-display { overflow-x: auto; overflow-y: hidden; }
+
+/* Content that could not be shown is marked, never silently dropped. */
+.ms-problems {
+  appearance: none;
+  border: 1px solid color-mix(in oklab, var(--ms-warning) 55%, transparent);
+  background: color-mix(in oklab, var(--ms-warning) 14%, transparent);
+  color: var(--ms-fg);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+.ms-problems-panel {
+  position: absolute;
+  inset-inline-end: 18px;
+  top: 52px;
+  z-index: 30;
+  inline-size: min(460px, calc(100vw - 36px));
+  max-block-size: 50vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  background: var(--ms-bg);
+  border: 1px solid color-mix(in oklab, var(--ms-fg) 18%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+.ms-problems-panel button {
+  text-align: start;
+  appearance: none;
+  background: transparent;
+  color: var(--ms-fg);
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+.ms-problems-panel button:hover, .ms-problems-panel button:focus-visible { background: var(--ms-tint); outline: none; }
+
+.ms-prose .ms-image-missing {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  color: var(--ms-caution);
+  background: color-mix(in oklab, var(--ms-caution) 12%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--ms-caution) 60%, transparent);
+}
+.ms-prose .ms-figure-missing {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  color: var(--ms-muted);
+  background: color-mix(in oklab, var(--ms-warning) 9%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--ms-warning) 60%, transparent);
+}
+.ms-prose .ms-figure-missing strong { color: var(--ms-fg); }
+.ms-prose .ms-figure-missing span { font-size: 0.92em; }
+.ms-prose .ms-unparsed {
+  background: color-mix(in oklab, var(--ms-warning) 22%, transparent);
+  border-radius: 3px;
+  cursor: help;
+}
+.ms-prose .ms-flash { animation: ms-flash 1.6s ease-out; }
+@keyframes ms-flash { from { outline: 3px solid var(--ms-accent); outline-offset: 4px; } to { outline: 3px solid transparent; outline-offset: 4px; } }
+.ms-prose pre[data-ms-loading]::before {
+  content: 'Rendering diagram...';
+  display: block;
+  margin-block-end: 8px;
+  color: var(--ms-muted);
+  font-size: 0.85em;
+}
+.ms-prose .ms-diagram-error + pre.ms-code { margin-block-start: 0; }

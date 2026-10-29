@@ -25,6 +25,8 @@ export interface Settings {
   enableEmoji: boolean;
   enableFootnotes: boolean;
   enableCallouts: boolean;
+  /** Render the HTML found in Markdown (images with a size, details, kbd) after filtering it. */
+  allowHtml: boolean;
   hideFrontmatter: boolean;
   showReadingTime: boolean;
   showCopyButtons: boolean;
@@ -59,6 +61,7 @@ export const DEFAULT_SETTINGS: Settings = {
   enableEmoji: true,
   enableFootnotes: true,
   enableCallouts: true,
+  allowHtml: true,
   hideFrontmatter: true,
   showReadingTime: true,
   showCopyButtons: true,

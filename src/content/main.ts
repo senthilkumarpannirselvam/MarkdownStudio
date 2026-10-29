@@ -8,6 +8,7 @@ import type { EditorHandle } from './editor';
 import type { ExportFormat } from './exporters';
 import { parseFrontmatter, renderFrontmatterCard } from './frontmatter';
 import { renderDynamicBlocks } from './lazy';
+import { initProblems } from './problems';
 import { createMarkdown } from './markdown';
 import { startPolling } from './poller';
 import { initSplitter } from './splitter';
@@ -109,6 +110,7 @@ async function start(): Promise<void> {
       <div class="ms-toolbar-right">
         <span class="ms-stats" data-role="stats"></span>
         <span class="ms-status" data-role="status" role="status"></span>
+        <button type="button" class="ms-problems" data-role="problems" aria-expanded="false" hidden></button>
         <button type="button" class="ms-icon-btn" data-action="toggle-sections" title="Collapse all sections" aria-label="Collapse all sections" hidden>${ICONS.collapse}</button>
         <button type="button" class="ms-icon-btn" data-action="toc" title="Table of contents (Alt+Shift+B)" aria-label="Contents">${ICONS.toc}</button>
         <button type="button" class="ms-icon-btn" data-action="theme" title="Light / dark (Alt+Shift+T)" aria-label="Switch theme">${ICONS.moon}</button>
@@ -127,6 +129,7 @@ async function start(): Promise<void> {
         </details>
       </div>
     </header>
+    <div class="ms-problems-panel" role="region" aria-label="Content that could not be shown" hidden></div>
     <aside class="ms-toc" aria-label="Table of contents"></aside>
     <main class="ms-main" data-ms-mode="view">
       <section class="ms-editor" aria-label="Editor" hidden></section>
@@ -146,6 +149,7 @@ async function start(): Promise<void> {
   const menu = $<HTMLDetailsElement>('.ms-menu');
   const divider = $('.ms-divider');
   await initSplitter(main, divider);
+  const problems = initProblems($('[data-role="problems"]'), $('.ms-problems-panel'), preview);
 
   let folds: FoldController = { count: 0, allFolded: () => false, expandAll() {}, collapseAll() {}, toggleAll() {} };
   const syncFoldButton = () => {
@@ -233,6 +237,7 @@ async function start(): Promise<void> {
 
     preview.innerHTML = renderFrontmatterCard(data) + md.render(body, {});
     renderToc(buildToc(preview));
+    problems.scan(preview);
     folds = enhancePreview(preview, {
       settings,
       baseUrl: location.href,
@@ -248,6 +253,7 @@ async function start(): Promise<void> {
       onFoldChange: syncFoldButton,
     });
     syncFoldButton();
+    problems.refresh();
     void renderDynamicBlocks(preview, settings);
 
     preview.scrollTop = scroll;

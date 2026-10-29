@@ -1,4 +1,5 @@
 import type { Settings } from '@shared/settings';
+import { resolveSource, watchImage } from './problems';
 
 export interface FoldController {
   /** Foldable headings on the page (levels 2 to 4). */
@@ -51,18 +52,18 @@ export function enhancePreview(root: HTMLElement, opts: EnhanceOptions): FoldCon
 function resolveUrls(root: HTMLElement, baseUrl: string): void {
   const base = new URL('.', baseUrl);
   root.querySelectorAll<HTMLImageElement>('img[src]').forEach((img) => {
-    img.src = new URL(img.getAttribute('src')!, base).href;
+    img.src = resolveSource(img.getAttribute('src')!, base);
     img.loading = 'lazy';
     img.decoding = 'async';
-    img.addEventListener('error', () => img.classList.add('ms-image-error'), { once: true });
+    watchImage(img);
   });
   root.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
     const href = a.getAttribute('href') ?? '';
     if (/^https?:/i.test(href)) {
       a.rel = 'noopener noreferrer';
       a.target = '_blank';
-    } else if (href && !href.startsWith('#') && !/^[a-z][a-z0-9+.-]*:/i.test(href)) {
-      a.href = new URL(href, base).href;
+    } else if (href && !href.startsWith('#')) {
+      a.href = resolveSource(href, base);
     }
   });
 }

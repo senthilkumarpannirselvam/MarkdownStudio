@@ -3,8 +3,12 @@ import { escapeHtml } from '@shared/html';
 import type { Settings } from '@shared/settings';
 import hljs from './hljs';
 import { applyPlugins } from './plugins';
+import { sanitizeHtml } from './sanitize';
 
 const SAFE_LANG = /^[\w#+.-]{1,32}$/;
+
+// Spellings people use for the diagram languages we can draw.
+const LANG_ALIASES: Record<string, string> = { mmd: 'mermaid', gv: 'dot', uml: 'plantuml' };
 
 const slugify = (text: string) =>
   text
@@ -16,13 +20,15 @@ const slugify = (text: string) =>
 
 export function createMarkdown(settings: Settings): MarkdownIt {
   const md: MarkdownIt = new MarkdownIt({
-    html: false,
+    html: settings.allowHtml,
     // A new line in the file is a new line on the page. A blank line still starts a new paragraph.
     breaks: true,
     linkify: true,
     typographer: true,
-    highlight(code, lang) {
+    highlight(code, info) {
       // The fence language is untrusted text: emit it only after validation and escaping.
+      const name = info.toLowerCase();
+      const lang = LANG_ALIASES[name] ?? name;
       const safe = SAFE_LANG.test(lang) ? escapeHtml(lang) : '';
       let body = md.utils.escapeHtml(code);
       if (safe && hljs.getLanguage(lang)) {
@@ -50,8 +56,24 @@ export function createMarkdown(settings: Settings): MarkdownIt {
     return self.renderToken(tokens, idx, options);
   };
 
+  // An indented block gets the same markup as a fenced one, so it wraps, scrolls and copies the same way.
+  md.renderer.rules.code_block = (tokens, idx) =>
+    `<pre class="ms-code"><code class="hljs">${md.utils.escapeHtml(tokens[idx]!.content)}</code></pre>\n`;
+
   applyPlugins(md, settings);
   md.core.ruler.push('br_tags', breakTags);
+
+  // A page opened from disk may link to and show other local files; a web page may not.
+  const onFilePage = typeof location !== 'undefined' && location.protocol === 'file:';
+  if (onFilePage) {
+    const validate = md.validateLink.bind(md);
+    md.validateLink = (url) => /^file:/i.test(url.trim()) || validate(url);
+  }
+
+  if (settings.allowHtml) {
+    const render = md.render.bind(md);
+    md.render = (src, env) => sanitizeHtml(render(src, env), onFilePage);
+  }
   return md;
 }
 

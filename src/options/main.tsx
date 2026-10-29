@@ -81,6 +81,7 @@ function App() {
       <section>
         <h2>Rendering</h2>
         <Check label="Callouts (> [!NOTE], [!WARNING], …)" value={settings.enableCallouts} onChange={(enableCallouts) => patch({ enableCallouts })} />
+        <Check label="HTML inside Markdown (images with a size, details, kbd, centered text); scripts and styles are always removed" value={settings.allowHtml} onChange={(allowHtml) => patch({ allowHtml })} />
         <Check label="Footnotes" value={settings.enableFootnotes} onChange={(enableFootnotes) => patch({ enableFootnotes })} />
         <Check label="Emoji shortcodes (:tada:)" value={settings.enableEmoji} onChange={(enableEmoji) => patch({ enableEmoji })} />
         <Check label="Wiki links ([[Page]])" value={settings.enableWikilinks} onChange={(enableWikilinks) => patch({ enableWikilinks })} />

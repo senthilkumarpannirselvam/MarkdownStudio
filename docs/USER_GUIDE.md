@@ -71,7 +71,17 @@ The words and reading-time estimate appear next to the buttons.
 - **Diagrams:** `mermaid` code blocks are drawn as diagrams. `dot` / `graphviz` blocks work if you turn them on
   in settings.
 - **Images and links** with relative paths are resolved against the file's own location, so a local
-  `![logo](images/logo.png)` shows the image sitting next to your file.
+  `![logo](images/logo.png)` shows the image sitting next to your file. For a local file these also work: a Windows
+  path (`C:\pics\logo.png`), a `file:///` address, backslashes in a relative path, and a path with spaces written
+  in angle brackets (`![logo](<my images/logo 2.png>)`).
+- **HTML inside Markdown** such as `<img src="logo.png" width="120">`, `<p align="center">`, `<details>`,
+  `<summary>`, `<kbd>`, `<sub>` and `<sup>` is shown. Scripts, frames, forms, event handlers and styles are always
+  removed. You can turn HTML off in settings.
+- **Anything that cannot be shown is marked, not hidden.** An image that fails to load becomes a visible note
+  saying which image and why. A figure the exporting tool left out (a placeholder such as
+  `[embedded content: ...]`) is labelled as missing. Image syntax that Markdown does not understand is highlighted.
+  A diagram that fails shows its error above its source. A **⚠** button in the toolbar counts these and lists them;
+  click an entry to jump to it.
 
 ### Page width and wide content
 
@@ -208,8 +218,22 @@ removing the extension, deletes drafts.
 **"Could not save: extension storage is full."** Drafts live in the extension's storage, which is limited (about
 10 MB). Discard old drafts in settings, and avoid embedding many large images.
 
-**A Mermaid diagram shows an error.** The message names the problem in the diagram text. Fix the syntax; the rest
-of the page is unaffected.
+**A Mermaid diagram shows an error.** The message names the problem in the diagram text, and the diagram's source
+stays visible below it. Fix the syntax; the rest of the page is unaffected.
+
+**A diagram or image is missing.** Click the **⚠** button in the toolbar to see what could not be shown and why.
+The common causes:
+
+- *"This figure is not included in the file"*: the document has only a placeholder such as
+  `[embedded content: ...]`. Some tools leave this where a picture or diagram was when they export to Markdown, so
+  the image data was never in the file. Re-export with images or diagrams included, or replace the placeholder with
+  a Mermaid block or an image link.
+- *"Image not loaded"* for a local file: the file was not found, or **Allow access to file URLs** is off for the
+  extension. Check the path and the switch.
+- *"Image not loaded"* for a web address: the server did not return an image, or blocked the request.
+- *Image not recognised*: the path contains spaces. Write it in angle brackets: `![alt](<my image.png>)`.
+- A diagram stays as code: its language must be `mermaid` (or `mmd`), `dot`/`graphviz`/`gv`, or `plantuml`.
+  Graphviz and PlantUML are off until you turn them on in settings.
 
 **The page is not rendered at all.** Files larger than about 3 million characters are left as plain text to keep
 the browser responsive. The site may also be on your off list.
@@ -225,6 +249,8 @@ command; the toolbar and editor are hidden automatically in print.
 - Edits to local files are saved by download; the extension cannot write to your disk directly.
 - Only `.md`, `.markdown`, `.mdx`, `.mdc`, `.mkd` and `.txt` addresses are handled, and only when the browser
   displays them as text. `.mdx` and `.mdc` are rendered as ordinary Markdown; JSX is not executed.
-- Raw HTML inside Markdown is shown as text, not executed.
+- HTML inside Markdown is filtered to a safe set of tags. Anything outside that set, including styles, scripts,
+  frames and forms, is removed.
+- Math written as `\( ... \)` or `\[ ... \]` is not recognised; use `$ ... $` and `$$ ... $$`.
 - Word export covers common structure; images and diagrams are not included.
 - Front matter is read as simple `key: value` pairs. Nested YAML is displayed as written.
