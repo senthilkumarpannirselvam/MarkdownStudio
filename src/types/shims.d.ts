@@ -12,3 +12,8 @@ declare module 'plantuml-encoder' {
 declare module '@hpcc-js/wasm/graphviz' {
   export const Graphviz: { load(): Promise<{ dot(source: string): string }> };
 }
+
+declare module '*?raw' {
+  const text: string;
+  export default text;
+}

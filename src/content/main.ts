@@ -4,6 +4,7 @@ import { ext, onStorageChange } from '@shared/browser';
 import { loadSettings, saveSettings, SETTINGS_KEY } from '@shared/settings';
 import { currentFilename, downloadFile } from './download';
 import { enhancePreview, scrollToId, toggleTaskInSource, type FoldController } from './enhance';
+import { installFavicon } from './favicon';
 import type { EditorHandle } from './editor';
 import type { ExportFormat } from './exporters';
 import { parseFrontmatter, renderFrontmatterCard } from './frontmatter';
@@ -94,6 +95,7 @@ async function start(): Promise<void> {
   document.body.replaceChildren();
   document.body.classList.add('ms-root');
   document.head.append(Object.assign(document.createElement('meta'), { name: 'darkreader-lock' }));
+  installFavicon();
 
   const shell = document.createElement('div');
   shell.className = 'ms-shell';
