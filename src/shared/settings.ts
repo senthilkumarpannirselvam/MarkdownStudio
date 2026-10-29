@@ -4,6 +4,8 @@ export type Theme = 'auto' | 'light' | 'dark';
 export type FontFamily = 'system' | 'serif' | 'sans' | 'mono';
 /** full: fit the screen; wide: capped at about 120 characters; reading: a 72-character column. */
 export type PageWidth = 'full' | 'wide' | 'reading';
+/** shrink: diagrams keep their own size and only shrink to fit; scroll: they always keep their own size. */
+export type DiagramFit = 'shrink' | 'scroll';
 
 export interface Settings {
   /** When false, Markdown files stay as the browser's plain text. */
@@ -12,6 +14,7 @@ export interface Settings {
   pageWidth: PageWidth;
   wrapTables: boolean;
   wrapCode: boolean;
+  diagramFit: DiagramFit;
   fontSize: number;
   fontFamily: FontFamily;
   showToc: boolean;
@@ -48,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pageWidth: 'full',
   wrapTables: true,
   wrapCode: true,
+  diagramFit: 'shrink',
   fontSize: 16,
   fontFamily: 'system',
   showToc: false,
@@ -78,6 +82,7 @@ const STORAGE_KEY = 'settings.v1';
 const THEMES: readonly Theme[] = ['auto', 'light', 'dark'];
 const FONTS: readonly FontFamily[] = ['system', 'serif', 'sans', 'mono'];
 const WIDTHS: readonly PageWidth[] = ['full', 'wide', 'reading'];
+const DIAGRAM_FITS: readonly DiagramFit[] = ['shrink', 'scroll'];
 
 const clamp = (n: unknown, min: number, max: number, fallback: number): number =>
   typeof n === 'number' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
@@ -107,6 +112,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   if (THEMES.includes(input.theme as Theme)) out.theme = input.theme as Theme;
   if (FONTS.includes(input.fontFamily as FontFamily)) out.fontFamily = input.fontFamily as FontFamily;
   if (WIDTHS.includes(input.pageWidth as PageWidth)) out.pageWidth = input.pageWidth as PageWidth;
+  if (DIAGRAM_FITS.includes(input.diagramFit as DiagramFit)) out.diagramFit = input.diagramFit as DiagramFit;
   out.fontSize = clamp(input.fontSize, 10, 28, DEFAULT_SETTINGS.fontSize);
   out.autosaveMs = clamp(input.autosaveMs, 0, 30000, DEFAULT_SETTINGS.autosaveMs);
   out.pollSeconds = clamp(input.pollSeconds, 2, 600, DEFAULT_SETTINGS.pollSeconds);

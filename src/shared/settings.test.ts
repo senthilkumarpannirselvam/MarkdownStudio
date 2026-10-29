@@ -61,3 +61,15 @@ describe('normalizeServerUrl', () => {
     (value) => expect(normalizeServerUrl(value)).toBe(DEFAULT_PLANTUML_SERVER),
   );
 });
+
+describe('diagramFit', () => {
+  it('shrinks wide diagrams to fit by default', () => {
+    expect(DEFAULT_SETTINGS.diagramFit).toBe('shrink');
+  });
+
+  it('accepts the known values and rejects anything else', () => {
+    expect(sanitizeSettings({ diagramFit: 'scroll' }).diagramFit).toBe('scroll');
+    expect(sanitizeSettings({ diagramFit: 'stretch' }).diagramFit).toBe('shrink');
+    expect(sanitizeSettings({ diagramFit: 7 }).diagramFit).toBe('shrink');
+  });
+});

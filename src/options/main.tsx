@@ -92,6 +92,8 @@ function App() {
 
       <section>
         <h2>Diagrams and math</h2>
+        <Select label="Wide diagrams" value={settings.diagramFit} onChange={(diagramFit) => patch({ diagramFit })}
+          options={[['shrink', 'Shrink to fit (never enlarged)'], ['scroll', 'Keep their own size and scroll']]} />
         <Check label="Mermaid diagrams" value={settings.enableMermaid} onChange={(enableMermaid) => patch({ enableMermaid })} />
         <Check label="Math with KaTeX ($…$ and $$…$$)" value={settings.enableKatex} onChange={(enableKatex) => patch({ enableKatex })} />
         <Check label="Graphviz (```dot blocks)" value={settings.enableGraphviz} onChange={(enableGraphviz) => patch({ enableGraphviz })} />

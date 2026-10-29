@@ -179,6 +179,7 @@ async function start(): Promise<void> {
     root.dataset.msWidth = settings.pageWidth;
     root.classList.toggle('ms-wrap-tables', settings.wrapTables);
     root.classList.toggle('ms-wrap-code', settings.wrapCode);
+    root.classList.toggle('ms-diagram-scroll', settings.diagramFit === 'scroll');
 
     const themeButton = shell.querySelector<HTMLButtonElement>('[data-action="theme"]');
     if (themeButton) {

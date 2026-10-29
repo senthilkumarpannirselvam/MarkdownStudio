@@ -397,7 +397,23 @@ html:not(.ms-wrap-tables) .ms-prose th, html:not(.ms-wrap-tables) .ms-prose td {
 
 /* Diagrams */
 .ms-diagram { margin: 1em auto; max-inline-size: var(--ms-block-measure); overflow-x: auto; }
-.ms-diagram svg { max-inline-size: 100%; block-size: auto; }
+/* --ms-w is the diagram's own width, set from its drawing. It shrinks to fit the column, down to 60% of its own size,
+   and scrolls beyond that. It is never enlarged. */
+.ms-diagram svg {
+  display: block;
+  margin-inline: auto;
+  inline-size: var(--ms-w, 100%);
+  max-inline-size: 100%;
+  min-inline-size: calc(var(--ms-w, 0px) * 0.6);
+  block-size: auto;
+}
+html.ms-diagram-scroll .ms-diagram svg { max-inline-size: none; min-inline-size: 0; }
+/* Mermaid sizes each label box for 1.5 line height; the page's own 1.65 would make every label taller than its box. */
+.ms-diagram foreignObject, .ms-diagram foreignObject * { line-height: 1.5; }
+.ms-diagram-zoomable { cursor: zoom-in; }
+.ms-diagram-zoomable.ms-diagram-actual { cursor: zoom-out; }
+.ms-diagram-zoomable:focus-visible { outline: 2px solid var(--ms-accent); outline-offset: 2px; }
+.ms-diagram.ms-diagram-actual svg { max-inline-size: none; min-inline-size: 0; margin-inline: 0; }
 .ms-diagram-error {
   max-inline-size: var(--ms-block-measure);
   margin: 1em auto;

@@ -69,7 +69,11 @@ The words and reading-time estimate appear next to the buttons.
 - **Math** with KaTeX: `$x^2$` inline and `$$ ... $$` for display. A dollar sign followed by a space, or a price
   such as `$5`, is left as text.
 - **Diagrams:** `mermaid` code blocks are drawn as diagrams. `dot` / `graphviz` blocks work if you turn them on
-  in settings.
+  in settings. A diagram is shown at its own size, so a small one stays small and a tall, narrow one is not blown up
+  to fill the page. One that is wider than the page shrinks to fit (never below 60% of its size). A diagram that was
+  shrunk shows a magnifier when you point at it: click it, or press Enter or Space while it is focused, to see it at
+  full size and scroll inside it, and click again to fit it back. In settings, **Wide diagrams** can instead keep
+  every diagram at its own size.
 - **Images and links** with relative paths are resolved against the file's own location, so a local
   `![logo](images/logo.png)` shows the image sitting next to your file. For a local file these also work: a Windows
   path (`C:\pics\logo.png`), a `file:///` address, backslashes in a relative path, and a path with spaces written
@@ -184,7 +188,7 @@ your devices through your browser account where supported, and take effect immed
 |---------|---------|
 | Appearance | Theme, font, size, page width, wrap tables and code, contents panel, reading time |
 | Rendering | Callouts, footnotes, emoji, wiki links, front matter card, copy buttons, section folding |
-| Diagrams and math | Mermaid, KaTeX, Graphviz, PlantUML and its server |
+| Diagrams and math | Mermaid, KaTeX, Graphviz, PlantUML and its server; whether wide diagrams shrink to fit or keep their size |
 | Editor | Open in edit mode, synchronized scrolling, minimap, autosave delay |
 | Online files | Refresh automatically when the file changes on the server |
 | Custom CSS | Your own styles; prefix selectors with `.ms-prose` to target the document |

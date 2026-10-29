@@ -36,6 +36,57 @@ function markLoading(blocks: HTMLElement[]): void {
   blocks.forEach((code) => code.parentElement?.setAttribute('data-ms-loading', ''));
 }
 
+/**
+ * Gives a diagram its own size. Mermaid draws every SVG at width 100%, which blows a narrow diagram up to the whole
+ * column and squashes a wide one until its text is unreadable. The size is handed to the stylesheet, which shrinks a
+ * diagram that is too wide but never enlarges one.
+ */
+export function sizeDiagram(svg: Element): void {
+  const attr = svg.getAttribute('width') ?? '';
+  const [, , boxWidth] = (svg.getAttribute('viewBox') ?? '').trim().split(/[\s,]+/).map(Number);
+  const own = /%$/.test(attr) ? NaN : parseFloat(attr) * (/pt$/.test(attr) ? 4 / 3 : 1);
+  const natural = Number.isFinite(own) && own > 0 ? own : boxWidth;
+  if (!natural || !Number.isFinite(natural)) return;
+
+  (svg as SVGElement).style.setProperty('--ms-w', `${Math.round(natural)}px`);
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+}
+
+/** A diagram that was shrunk to fit can be clicked (or activated with Enter or Space) to show it at its own size. */
+export function makeZoomable(holder: HTMLElement, svg: Element): void {
+  const naturalWidth = () => parseFloat((svg as SVGElement).style.getPropertyValue('--ms-w'));
+  const refresh = () => {
+    const shrunk = svg.getBoundingClientRect().width < naturalWidth() - 2;
+    const zoomable = shrunk || holder.classList.contains('ms-diagram-actual');
+    holder.classList.toggle('ms-diagram-zoomable', zoomable);
+    if (zoomable) {
+      holder.tabIndex = 0;
+      holder.setAttribute('role', 'button');
+      holder.title = holder.classList.contains('ms-diagram-actual') ? 'Click to fit to the page' : 'Click to show at full size';
+    } else {
+      holder.removeAttribute('tabindex');
+      holder.removeAttribute('role');
+      holder.removeAttribute('title');
+    }
+    return zoomable;
+  };
+  const toggle = () => {
+    if (!refresh()) return;
+    holder.classList.toggle('ms-diagram-actual');
+    refresh();
+  };
+
+  holder.addEventListener('pointerenter', refresh);
+  holder.addEventListener('focus', refresh);
+  holder.addEventListener('click', toggle);
+  holder.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    toggle();
+  });
+}
+
 /** Explains why a diagram failed, above its source, which stays visible so nothing is lost. */
 function flagBlock(code: HTMLElement, kind: string, error: unknown): void {
   const pre = code.parentElement;
@@ -78,6 +129,11 @@ async function renderMermaid(root: HTMLElement): Promise<void> {
     holder.className = 'ms-diagram';
     try {
       holder.innerHTML = (await mermaid.render(`ms-mermaid-${mermaidCounter++}`, code.textContent ?? '')).svg;
+      const svg = holder.querySelector('svg');
+      if (svg) {
+        sizeDiagram(svg);
+        makeZoomable(holder, svg);
+      }
       replaceBlock(code, holder);
     } catch (error) {
       flagBlock(code, 'Mermaid', error);
@@ -199,7 +255,10 @@ async function renderGraphviz(root: HTMLElement): Promise<void> {
       const holder = document.createElement('div');
       holder.className = 'ms-diagram';
       holder.innerHTML = sanitizeSvg(graphviz.dot(code.textContent ?? ''));
-      if (!holder.querySelector('svg')) throw new Error('The diagram could not be drawn');
+      const svg = holder.querySelector('svg');
+      if (!svg) throw new Error('The diagram could not be drawn');
+      sizeDiagram(svg);
+      makeZoomable(holder, svg);
       replaceBlock(code, holder);
     } catch (error) {
       flagBlock(code, 'Graphviz', error);
