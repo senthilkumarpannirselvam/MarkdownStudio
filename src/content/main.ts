@@ -3,7 +3,7 @@ import { clearDraft, getDraft, saveDraft } from '@shared/drafts';
 import { ext, onStorageChange } from '@shared/browser';
 import { loadSettings, saveSettings, SETTINGS_KEY } from '@shared/settings';
 import { currentFilename, downloadFile } from './download';
-import { enhancePreview, scrollToId, toggleTaskInSource } from './enhance';
+import { enhancePreview, scrollToId, toggleTaskInSource, type FoldController } from './enhance';
 import type { EditorHandle } from './editor';
 import type { ExportFormat } from './exporters';
 import { parseFrontmatter, renderFrontmatterCard } from './frontmatter';
@@ -19,6 +19,18 @@ type Mode = 'view' | 'edit' | 'split';
 
 const TEXT_TYPES = /^text\/(plain|markdown|x-markdown|x-web-markdown)$/;
 const MAX_SOURCE_CHARS = 3_000_000;
+
+const ICON =
+  'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"';
+const icon = (body: string) => `<svg ${ICON}>${body}</svg>`;
+const ICONS = {
+  toc: icon('<path d="M8 6h13M8 12h13M8 18h13"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>'),
+  save: icon('<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/>'),
+  moon: icon('<path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/>'),
+  sun: icon('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>'),
+  expand: icon('<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>'),
+  collapse: icon('<path d="m7 4 5 5 5-5"/><path d="m7 20 5-5 5 5"/>'),
+};
 
 const FORMAT_BUTTONS: Array<[ToolbarAction, string, string]> = [
   ['bold', '<b>B</b>', 'Bold (Ctrl+B)'],
@@ -51,6 +63,13 @@ async function start(): Promise<void> {
   if (original.length > MAX_SOURCE_CHARS) return;
 
   let settings = await loadSettings();
+  if (!settings.enabled) {
+    onStorageChange(async (key) => {
+      if (key !== SETTINGS_KEY) return;
+      if ((await loadSettings()).enabled) location.reload();
+    });
+    return;
+  }
   let md = createMarkdown(settings);
 
   let draft = await getDraft(location.href);
@@ -90,9 +109,10 @@ async function start(): Promise<void> {
       <div class="ms-toolbar-right">
         <span class="ms-stats" data-role="stats"></span>
         <span class="ms-status" data-role="status" role="status"></span>
-        <button type="button" data-action="toc" title="Table of contents (Alt+Shift+B)">Contents</button>
-        <button type="button" data-action="theme" title="Light / dark (Alt+Shift+T)">Theme</button>
-        <button type="button" data-action="save" title="Save (Ctrl+S)">Save</button>
+        <button type="button" class="ms-icon-btn" data-action="toggle-sections" title="Collapse all sections" aria-label="Collapse all sections" hidden>${ICONS.collapse}</button>
+        <button type="button" class="ms-icon-btn" data-action="toc" title="Table of contents (Alt+Shift+B)" aria-label="Contents">${ICONS.toc}</button>
+        <button type="button" class="ms-icon-btn" data-action="theme" title="Light / dark (Alt+Shift+T)" aria-label="Switch theme">${ICONS.moon}</button>
+        <button type="button" class="ms-icon-btn" data-action="save" title="Save (Ctrl+S)" aria-label="Save">${ICONS.save}</button>
         <details class="ms-menu">
           <summary aria-label="More actions">&#8943;</summary>
           <div class="ms-menu-items">
@@ -127,6 +147,18 @@ async function start(): Promise<void> {
   const divider = $('.ms-divider');
   await initSplitter(main, divider);
 
+  let folds: FoldController = { count: 0, allFolded: () => false, expandAll() {}, collapseAll() {}, toggleAll() {} };
+  const syncFoldButton = () => {
+    const button = shell.querySelector<HTMLButtonElement>('[data-action="toggle-sections"]');
+    if (!button) return;
+    button.hidden = folds.count < 2;
+    const expand = folds.allFolded();
+    button.innerHTML = expand ? ICONS.expand : ICONS.collapse;
+    const label = expand ? 'Expand all sections' : 'Collapse all sections';
+    button.title = label;
+    button.setAttribute('aria-label', label);
+  };
+
   const setStatus = (text: string) => void (statusEl.textContent = text);
   const clock = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -143,6 +175,13 @@ async function start(): Promise<void> {
     root.dataset.msWidth = settings.pageWidth;
     root.classList.toggle('ms-wrap-tables', settings.wrapTables);
     root.classList.toggle('ms-wrap-code', settings.wrapCode);
+
+    const themeButton = shell.querySelector<HTMLButtonElement>('[data-action="theme"]');
+    if (themeButton) {
+      const dark = resolveTheme() === 'dark';
+      themeButton.innerHTML = dark ? ICONS.sun : ICONS.moon;
+      themeButton.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    }
 
     let style = document.getElementById('ms-user-css');
     if (settings.customCss) {
@@ -194,7 +233,7 @@ async function start(): Promise<void> {
 
     preview.innerHTML = renderFrontmatterCard(data) + md.render(body, {});
     renderToc(buildToc(preview));
-    enhancePreview(preview, {
+    folds = enhancePreview(preview, {
       settings,
       baseUrl: location.href,
       lineOffset,
@@ -203,7 +242,12 @@ async function start(): Promise<void> {
         editor?.setValue(source);
         markEdited();
       },
+      onSectionOpen(body) {
+        void renderDynamicBlocks(body, settings);
+      },
+      onFoldChange: syncFoldButton,
     });
+    syncFoldButton();
     void renderDynamicBlocks(preview, settings);
 
     preview.scrollTop = scroll;
@@ -338,6 +382,7 @@ async function start(): Promise<void> {
     toc: toggleToc,
     theme: toggleTheme,
     save,
+    'toggle-sections': () => folds.toggleAll(),
     discard: reload,
     options: () => void ext.runtime.sendMessage({ type: 'openOptions' }),
     block: async () => {
@@ -390,7 +435,12 @@ async function start(): Promise<void> {
 
   onStorageChange(async (key) => {
     if (key !== SETTINGS_KEY) return;
-    settings = await loadSettings();
+    const next = await loadSettings();
+    if (!next.enabled) {
+      location.reload();
+      return;
+    }
+    settings = next;
     md = createMarkdown(settings);
     applyAppearance();
     updateStats();

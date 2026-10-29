@@ -6,6 +6,8 @@ export type FontFamily = 'system' | 'serif' | 'sans' | 'mono';
 export type PageWidth = 'full' | 'wide' | 'reading';
 
 export interface Settings {
+  /** When false, Markdown files stay as the browser's plain text. */
+  enabled: boolean;
   theme: Theme;
   pageWidth: PageWidth;
   wrapTables: boolean;
@@ -39,6 +41,7 @@ export const DEFAULT_PLANTUML_SERVER = 'https://www.plantuml.com/plantuml';
 export const MAX_CUSTOM_CSS = 4000;
 
 export const DEFAULT_SETTINGS: Settings = {
+  enabled: true,
   theme: 'auto',
   pageWidth: 'full',
   wrapTables: true,

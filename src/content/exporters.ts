@@ -24,6 +24,7 @@ function cleanClone(preview: HTMLElement): HTMLElement {
   const clone = preview.cloneNode(true) as HTMLElement;
   clone.querySelectorAll('.ms-copy, .ms-fold-toggle').forEach((el) => el.remove());
   clone.querySelectorAll<HTMLElement>('[hidden]').forEach((el) => el.removeAttribute('hidden'));
+  clone.querySelectorAll<HTMLElement>('.ms-section-folded').forEach((el) => el.classList.remove('ms-section-folded'));
   return clone;
 }
 
@@ -36,7 +37,7 @@ function standaloneHtml(preview: HTMLElement, filename: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(filename)}</title>
 <style>
-body { font: 16px/1.6 system-ui, sans-serif; max-width: 72ch; margin: 2em auto; padding: 0 1em; color: #1f1f1f; overflow-wrap: anywhere; }
+body { font: 16px/1.6 system-ui, sans-serif; max-width: 72ch; margin: 2em auto; padding: 0 1em; color: #1f1f1f; overflow-wrap: break-word; }
 pre, code { font-family: ui-monospace, Menlo, Consolas, monospace; }
 pre { background: #f3f1ee; padding: 12px 16px; border-radius: 6px; overflow-x: auto; }
 code { background: #f3f1ee; padding: 1px 5px; border-radius: 3px; }

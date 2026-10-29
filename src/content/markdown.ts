@@ -17,6 +17,8 @@ const slugify = (text: string) =>
 export function createMarkdown(settings: Settings): MarkdownIt {
   const md: MarkdownIt = new MarkdownIt({
     html: false,
+    // A new line in the file is a new line on the page. A blank line still starts a new paragraph.
+    breaks: true,
     linkify: true,
     typographer: true,
     highlight(code, lang) {
@@ -49,5 +51,34 @@ export function createMarkdown(settings: Settings): MarkdownIt {
   };
 
   applyPlugins(md, settings);
+  md.core.ruler.push('br_tags', breakTags);
   return md;
 }
+
+const BR_TAG = /<br\s*\/?>/gi;
+
+/** Turns a literal `<br>` into a break. Any other HTML, including a `<br>` with attributes, stays text. */
+const breakTags: Parameters<MarkdownIt['core']['ruler']['push']>[1] = (state) => {
+  for (const token of state.tokens) {
+    if (token.type !== 'inline' || !token.children) continue;
+    const next = [];
+    for (const child of token.children) {
+      if (child.type !== 'text' || !BR_TAG.test(child.content)) {
+        BR_TAG.lastIndex = 0;
+        next.push(child);
+        continue;
+      }
+      BR_TAG.lastIndex = 0;
+      const parts = child.content.split(BR_TAG);
+      parts.forEach((part, index) => {
+        if (part) {
+          const text = new state.Token('text', '', 0);
+          text.content = part;
+          next.push(text);
+        }
+        if (index < parts.length - 1) next.push(new state.Token('hardbreak', 'br', 0));
+      });
+    }
+    token.children = next;
+  }
+};

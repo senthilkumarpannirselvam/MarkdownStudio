@@ -69,6 +69,36 @@ describe('rendering', () => {
     expect(html).toContain('data-line="3"');
   });
 
+  it('shows a single line break instead of joining the lines', () => {
+    const html = render('one\ntwo');
+    expect(html).toContain('one<br>');
+    expect(html).toContain('two');
+    expect(html.match(/<p>/g)).toHaveLength(1);
+  });
+
+  it('keeps a blank line as a new paragraph', () => {
+    expect(render('one\n\ntwo').match(/<p>/g)).toHaveLength(2);
+  });
+
+  it('turns a br tag into a break and leaves every other tag as text', () => {
+    const html = render('one<br>two<br/>three<br />four');
+    expect(html).toMatch(/one<br>\s*two<br>\s*three<br>\s*four/);
+    const unsafe = render('see <br class="x" onclick="alert(1)"> and <script>');
+    expect(unsafe).not.toContain('<br');
+    expect(unsafe).not.toContain('<script');
+    expect(render('`keep <br> here`')).toContain('&lt;br&gt;');
+  });
+
+  it('breaks a table cell on a br tag', () => {
+    expect(render('| A |\n| --- |\n| one<br>two |')).toMatch(/one<br>\s*two/);
+  });
+
+  it('keeps newlines inside a code block', () => {
+    const html = render('```\nalpha\nbeta\n```');
+    expect(html).toContain('alpha\nbeta');
+    expect(html).not.toContain('<br');
+  });
+
   it('respects feature toggles', () => {
     expect(render('> [!NOTE]\n> x', { enableCallouts: false })).not.toContain('ms-callout');
     expect(render(':tada:', { enableEmoji: false })).toContain(':tada:');

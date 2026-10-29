@@ -17,7 +17,13 @@ describe('sanitizeSettings', () => {
   });
 
   it('fits the screen and wraps tables and code by default', () => {
-    expect(DEFAULT_SETTINGS).toMatchObject({ pageWidth: 'full', wrapTables: true, wrapCode: true });
+    expect(DEFAULT_SETTINGS).toMatchObject({ pageWidth: 'full', wrapTables: true, wrapCode: true, enabled: true });
+  });
+
+  it('stays on unless a stored value turns it off', () => {
+    expect(sanitizeSettings({}).enabled).toBe(true);
+    expect(sanitizeSettings({ enabled: false }).enabled).toBe(false);
+    expect(sanitizeSettings({ enabled: 'no' }).enabled).toBe(true);
   });
 
   it('accepts the known page widths and rejects anything else', () => {

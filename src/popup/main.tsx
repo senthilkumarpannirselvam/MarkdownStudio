@@ -24,6 +24,15 @@ function App() {
     <main className="pop">
       <h1>Markdown Studio</h1>
       <div className="row">
+        <label htmlFor="enabled">Enable Markdown Studio</label>
+        <input
+          id="enabled"
+          type="checkbox"
+          checked={settings.enabled}
+          onChange={(e) => patch({ enabled: e.target.checked })}
+        />
+      </div>
+      <div className="row">
         <label htmlFor="theme">Theme</label>
         <select id="theme" value={settings.theme} onChange={(e) => patch({ theme: e.target.value as Settings['theme'] })}>
           <option value="auto">Match system</option>

@@ -47,9 +47,10 @@ The toolbar sits at the top of the page.
 | Control | What it does |
 |---------|--------------|
 | **View / Edit / Split** | Switch between reading, editing, and editing with a live preview |
-| **Contents** | Open a side panel listing every heading; click one to jump to it |
-| **Theme** | Switch between light and dark. Your choice is remembered |
-| **Save** | Save your edits (see [Editing and saving](#editing-and-saving)) |
+| **Sections** | One icon. Closes every section, or opens them when they are all closed. Shown when the page has more than one foldable heading |
+| **Contents** | List icon. Open a side panel of every heading; click one to jump to it |
+| **Theme** | Sun or moon icon. Switch between light and dark. Your choice is remembered |
+| **Save** | Save icon. Save your edits (see [Editing and saving](#editing-and-saving)) |
 | **&#8943;** | Export, discard a draft, turn the extension off for this site, open settings |
 
 The words and reading-time estimate appear next to the buttons.
@@ -58,6 +59,8 @@ The words and reading-time estimate appear next to the buttons.
 
 - **GitHub-flavoured Markdown:** tables, task lists, strikethrough, links and bare URLs, fenced code with
   syntax highlighting.
+- **Line breaks:** a new line in the file starts a new line on the page. A blank line starts a new paragraph.
+  Inside a table cell, write `<br>` where the line should break.
 - **Callouts:** a quote that starts with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]`.
 - **Footnotes, definition lists, `H~2~O`, `x^2^`, `==highlight==`, `++inserted++`, abbreviations, emoji
   shortcodes such as `:tada:`.
@@ -73,8 +76,8 @@ The words and reading-time estimate appear next to the buttons.
 ### Page width and wide content
 
 There is no frame around the page, and it **fits your window**: text, tables and code use the available width and
-reflow when you resize the window. Long words, URLs, table cells and code lines wrap instead of running off the
-screen, so the page itself never scrolls sideways.
+reflow when you resize the window. Ordinary words break at a space. A long URL or path breaks only when it does
+not fit on the line. The page itself does not scroll sideways.
 
 Choose how wide the page gets in the toolbar popup or in settings:
 
@@ -92,8 +95,9 @@ Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> to switch between fit-to-scre
 
 ### Folding and copying
 
-Click the small arrow beside a level 2 to 4 heading to fold that section. Hover a code block to reveal its
-**Copy** button.
+Click the arrow beside a level 2, 3, or 4 heading to fold that section. Open it again to show the text, pictures,
+and diagrams inside it. When the page has more than one of these headings, one toolbar icon closes every
+section. Click it again to open them. Hover a code block to reveal its **Copy** button.
 
 ## Editing and saving
 
@@ -123,10 +127,10 @@ A browser extension cannot overwrite a file on your disk. Markdown Studio theref
 - **Drafts.** Every change is saved automatically, a couple of seconds after you stop typing, as a *draft*
   stored in the extension. The status text next to the toolbar shows "Draft saved". If you reload the page, close
   the tab or restart the browser, your draft is restored and the status reads "Restored your saved draft".
-- **Local files.** Press **Save** or <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>S</kbd> to download the edited file
+- **Local files.** Press the save icon or <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>S</kbd> to download the edited file
   under its original name, then replace the original with it. Until you do, the original on disk is unchanged.
-- **Files on websites.** Edits cannot be sent back to the server. Your draft stays in the extension, and **Save**
-  refreshes it. Use **Export Markdown** to get a copy.
+- **Files on websites.** Edits cannot be sent back to the server. Your draft stays in the extension, and the save
+  icon refreshes it. Use **Export Markdown** to get a copy.
 
 To throw an edit away, open the **&#8943;** menu and choose **Discard draft and reload**.
 
@@ -162,7 +166,8 @@ and save shortcuts work while the page has focus.
 
 ## Settings
 
-Open the toolbar icon for the quick settings, and choose **All settings** for the rest. Settings sync across
+Open the toolbar icon for quick settings. **Enable Markdown Studio** turns rendering on or off for every file.
+An open Markdown page reloads when you flip it. Choose **All settings** for the rest. Settings sync across
 your devices through your browser account where supported, and take effect immediately on open pages.
 
 | Section | Options |
@@ -181,6 +186,10 @@ of each `plantuml` block to the server named in settings (plantuml.com by defaul
 private diagrams. It is off by default.
 
 ## Troubleshooting
+
+**A Markdown file stays plain text.** Open the extension icon and turn on **Enable Markdown Studio**. The page
+reloads and renders. If it is still plain text, the site may be on your off list (below), or a local file may
+need **Allow access to file URLs**.
 
 **A local file shows as plain text.** Turn on **Allow access to file URLs** for the extension (see
 [Getting started](#open-files-stored-on-your-computer)), then reload the file.

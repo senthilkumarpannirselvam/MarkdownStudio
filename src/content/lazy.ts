@@ -16,6 +16,20 @@ export async function renderDynamicBlocks(root: HTMLElement, settings: Settings)
 const codeBlocks = (root: HTMLElement, ...langs: string[]) =>
   [...root.querySelectorAll<HTMLElement>(langs.map((l) => `pre.ms-code > code.language-${l}`).join(','))];
 
+const claimedBlocks = new WeakSet<HTMLElement>();
+
+/** One renderer wins. Blocks inside a closed section wait until that section is opened. */
+function claimBlock(code: HTMLElement): boolean {
+  if (!code.isConnected || code.closest('.ms-section-folded') || claimedBlocks.has(code)) return false;
+  claimedBlocks.add(code);
+  return true;
+}
+
+function replaceBlock(code: HTMLElement, next: HTMLElement): void {
+  if (!code.isConnected) return;
+  code.parentElement?.replaceWith(next);
+}
+
 function errorBox(kind: string, error: unknown): HTMLElement {
   const box = document.createElement('div');
   box.className = `ms-diagram-error`;
@@ -37,13 +51,14 @@ async function renderMermaid(root: HTMLElement): Promise<void> {
   mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default' });
 
   for (const code of blocks) {
+    if (!claimBlock(code)) continue;
     const holder = document.createElement('div');
     holder.className = 'ms-diagram';
     try {
       holder.innerHTML = (await mermaid.render(`ms-mermaid-${mermaidCounter++}`, code.textContent ?? '')).svg;
-      code.parentElement!.replaceWith(holder);
+      replaceBlock(code, holder);
     } catch (error) {
-      code.parentElement!.replaceWith(errorBox('Mermaid', error));
+      replaceBlock(code, errorBox('Mermaid', error));
     }
   }
 }
@@ -80,7 +95,7 @@ export function splitMath(text: string): Array<{ text: string; math?: string; di
 async function renderMath(root: HTMLElement): Promise<void> {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) =>
-      node.nodeValue?.includes('$') && !node.parentElement?.closest('pre, code')
+      node.nodeValue?.includes('$') && !node.parentElement?.closest('pre, code, .ms-section-folded')
         ? NodeFilter.FILTER_ACCEPT
         : NodeFilter.FILTER_REJECT,
   });
@@ -111,13 +126,14 @@ async function renderMath(root: HTMLElement): Promise<void> {
 
 async function renderPlantuml(root: HTMLElement, server: string): Promise<void> {
   for (const code of codeBlocks(root, 'plantuml', 'puml')) {
+    if (!claimBlock(code)) continue;
     const img = document.createElement('img');
     img.className = 'ms-plantuml';
     img.alt = 'PlantUML diagram';
     img.loading = 'lazy';
     img.referrerPolicy = 'no-referrer';
     img.src = `${server}/svg/${plantumlEncoder.encode(code.textContent ?? '')}`;
-    code.parentElement!.replaceWith(img);
+    replaceBlock(code, img);
   }
 }
 
@@ -147,13 +163,14 @@ async function renderGraphviz(root: HTMLElement): Promise<void> {
   const graphviz = await graphvizReady;
 
   for (const code of blocks) {
+    if (!claimBlock(code)) continue;
     try {
       const holder = document.createElement('div');
       holder.className = 'ms-diagram';
       holder.innerHTML = sanitizeSvg(graphviz.dot(code.textContent ?? ''));
-      code.parentElement!.replaceWith(holder);
+      replaceBlock(code, holder);
     } catch (error) {
-      code.parentElement!.replaceWith(errorBox('Graphviz', error));
+      replaceBlock(code, errorBox('Graphviz', error));
     }
   }
 }

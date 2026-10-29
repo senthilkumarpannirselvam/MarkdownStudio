@@ -1,12 +1,35 @@
 import type { Settings } from '@shared/settings';
 
+export interface FoldController {
+  /** Foldable headings on the page (levels 2 to 4). */
+  readonly count: number;
+  /** True when every foldable section is closed. */
+  allFolded(): boolean;
+  expandAll(): void;
+  collapseAll(): void;
+  /** Closes every section, or opens them when they are already all closed. */
+  toggleAll(): void;
+}
+
 export interface EnhanceOptions {
   settings: Settings;
   baseUrl: string;
   /** Source lines stripped before the rendered body (front matter). */
   lineOffset: number;
   onTaskToggle(sourceLine: number, checked: boolean): void;
+  /** A section was opened. Diagrams inside it may not have been drawn yet. */
+  onSectionOpen?(body: HTMLElement): void;
+  /** A heading was opened or closed, including expand-all and collapse-all. */
+  onFoldChange?(): void;
 }
+
+const NO_FOLDS: FoldController = {
+  count: 0,
+  allFolded: () => false,
+  expandAll() {},
+  collapseAll() {},
+  toggleAll() {},
+};
 
 const prefersReducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -15,13 +38,14 @@ export function scrollToId(id: string): void {
 }
 
 /** Post-processes freshly rendered Markdown in place. Must run after the TOC is built. */
-export function enhancePreview(root: HTMLElement, opts: EnhanceOptions): void {
+export function enhancePreview(root: HTMLElement, opts: EnhanceOptions): FoldController {
   resolveUrls(root, opts.baseUrl);
   if (opts.settings.showCopyButtons) addCopyButtons(root);
   if (opts.settings.enableCallouts) addCalloutIcons(root);
   wireTaskLists(root, opts);
-  if (opts.settings.foldSections) addFolding(root);
+  const folds = opts.settings.foldSections ? addFolding(root, opts.onSectionOpen, opts.onFoldChange) : NO_FOLDS;
   wireAnchors(root);
+  return folds;
 }
 
 function resolveUrls(root: HTMLElement, baseUrl: string): void {
@@ -84,25 +108,104 @@ function wireTaskLists(root: HTMLElement, opts: EnhanceOptions): void {
   });
 }
 
-function addFolding(root: HTMLElement): void {
-  root.querySelectorAll<HTMLHeadingElement>('h2, h3, h4').forEach((heading) => {
+interface FoldSection {
+  heading: HTMLHeadingElement;
+  body: HTMLElement;
+  toggle: HTMLButtonElement;
+}
+
+/**
+ * Each heading owns one body wrapper. Folding toggles a class on that wrapper, so a diagram
+ * that replaces a code block later stays inside the section. Nested headings keep their own
+ * wrappers and their own open or closed state.
+ */
+function addFolding(
+  root: HTMLElement,
+  onSectionOpen?: (body: HTMLElement) => void,
+  onFoldChange?: () => void,
+): FoldController {
+  const headings = [...root.querySelectorAll<HTMLHeadingElement>('h2, h3, h4')];
+  const sections: FoldSection[] = [];
+
+  headings.forEach((heading, index) => {
+    const parent = heading.parentElement;
+    if (!parent || (parent !== root && !parent.classList.contains('ms-section'))) return;
+
+    const level = Number(heading.tagName[1]);
+    const body = document.createElement('div');
+    body.className = 'ms-section';
+    body.id = `ms-fold-${heading.id || index}`;
+    heading.after(body);
+
+    let sibling = body.nextElementSibling;
+    while (sibling) {
+      if (sibling instanceof HTMLHeadingElement && Number(sibling.tagName[1]) <= level) break;
+      const next = sibling.nextElementSibling;
+      body.append(sibling);
+      sibling = next;
+    }
+
     const toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'ms-fold-toggle';
-    toggle.setAttribute('aria-label', 'Fold section');
-    toggle.setAttribute('aria-expanded', 'true');
-    toggle.textContent = '▾';
-    toggle.addEventListener('click', () => {
-      const level = Number(heading.tagName[1]);
-      const folded = heading.classList.toggle('ms-folded');
-      toggle.setAttribute('aria-expanded', String(!folded));
-      toggle.textContent = folded ? '▸' : '▾';
-      for (let n = heading.nextElementSibling as HTMLElement | null; n; n = n.nextElementSibling as HTMLElement | null) {
-        if (/^H[1-6]$/.test(n.tagName) && Number(n.tagName[1]) <= level) break;
-        n.hidden = folded;
-      }
-    });
+    toggle.setAttribute('aria-controls', body.id);
     heading.prepend(toggle);
+
+    const section: FoldSection = { heading, body, toggle };
+    setFolded(section, false, onSectionOpen);
+    toggle.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setFolded(section, !body.classList.contains('ms-section-folded'), onSectionOpen);
+      onFoldChange?.();
+    });
+    sections.push(section);
+  });
+
+  const allFolded = () => sections.length > 0 && sections.every((section) => section.body.classList.contains('ms-section-folded'));
+  const expandAll = () => {
+    for (const section of sections) setFolded(section, false, onSectionOpen);
+  };
+  const collapseAll = () => {
+    for (const section of sections) setFolded(section, true, onSectionOpen);
+  };
+
+  return {
+    count: sections.length,
+    allFolded,
+    expandAll,
+    collapseAll,
+    toggleAll() {
+      if (allFolded()) expandAll();
+      else collapseAll();
+      onFoldChange?.();
+    },
+  };
+}
+
+function setFolded(section: FoldSection, folded: boolean, onSectionOpen?: (body: HTMLElement) => void): void {
+  const wasFolded = section.body.classList.contains('ms-section-folded');
+  section.heading.classList.toggle('ms-folded', folded);
+  section.body.classList.toggle('ms-section-folded', folded);
+  section.toggle.setAttribute('aria-expanded', String(!folded));
+  section.toggle.setAttribute('aria-label', folded ? 'Expand section' : 'Collapse section');
+  section.toggle.textContent = folded ? '▸' : '▾';
+  if (!wasFolded || folded) return;
+  resumeLazyMedia(section.body);
+  onSectionOpen?.(section.body);
+}
+
+/** Chrome does not fetch a lazy image that was inside a closed section, so reopen starts the load again. */
+function resumeLazyMedia(root: HTMLElement): void {
+  root.querySelectorAll<HTMLImageElement>('img[src]').forEach((img) => {
+    if (img.closest('.ms-section-folded')) return;
+    if (img.complete && img.naturalWidth > 0) return;
+    const src = img.getAttribute('src');
+    if (!src) return;
+    img.loading = 'eager';
+    img.classList.remove('ms-image-error');
+    img.removeAttribute('src');
+    img.src = src;
   });
 }
 

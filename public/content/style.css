@@ -93,6 +93,16 @@ html.ms-toc-visible .ms-shell { grid-template-columns: 240px minmax(0, 1fr); }
   background: var(--ms-tint);
   outline: none;
 }
+.ms-toolbar button.ms-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  flex: none;
+}
+.ms-toolbar button.ms-icon-btn svg { width: 18px; height: 18px; }
 
 .ms-shell [hidden] { display: none !important; }
 
@@ -233,10 +243,17 @@ html.ms-panes .ms-preview { overflow-y: auto; }
 html.ms-panes .ms-toc { overflow-y: auto; }
 
 /* Page width: --ms-measure caps text, --ms-block-measure caps tables, code and diagrams. */
-.ms-prose { --ms-measure: none; --ms-block-measure: none; overflow-wrap: anywhere; }
+/* Long tokens wrap only when they overflow the line, so ordinary words stay whole. */
+.ms-prose { --ms-measure: none; --ms-block-measure: none; overflow-wrap: break-word; }
 html[data-ms-width='wide'] .ms-prose { --ms-measure: 120ch; --ms-block-measure: 120ch; }
 html[data-ms-width='reading'] .ms-prose { --ms-measure: 72ch; --ms-block-measure: 96ch; }
-.ms-prose > * { max-inline-size: var(--ms-measure); margin-inline: auto; }
+.ms-prose > *:not(.ms-section),
+.ms-section > *:not(.ms-section):not(.ms-code):not(.ms-table-wrap):not(.ms-diagram):not(.ms-diagram-error):not(.ms-plantuml) {
+  max-inline-size: var(--ms-measure);
+  margin-inline: auto;
+}
+.ms-prose p, .ms-prose li, .ms-prose td, .ms-prose th, .ms-prose blockquote { text-wrap: pretty; }
+.ms-prose h1, .ms-prose h2, .ms-prose h3, .ms-prose h4, .ms-prose h5, .ms-prose h6 { text-wrap: balance; }
 .ms-prose h1 { font-size: 2em; margin: 1.2em auto 0.4em; }
 .ms-prose h2 { font-size: 1.5em; margin: 1.4em auto 0.3em; }
 .ms-prose h3 { font-size: 1.2em; margin: 1.2em auto 0.3em; }
@@ -376,6 +393,7 @@ html:not(.ms-wrap-tables) .ms-prose th, html:not(.ms-wrap-tables) .ms-prose td {
   font-size: 0.85em;
 }
 .ms-fold-toggle:hover { color: var(--ms-fg); }
+.ms-section-folded { display: none; }
 
 /* Diagrams */
 .ms-diagram { margin: 1em auto; max-inline-size: var(--ms-block-measure); overflow-x: auto; }
@@ -421,10 +439,14 @@ html:not(.ms-wrap-tables) .ms-prose th, html:not(.ms-wrap-tables) .ms-prose td {
 /* Print — strip chrome, let prose flow full-width in standard colors. */
 @media print {
   .ms-toolbar, .ms-toc, .ms-editor, .ms-copy, .ms-fold-toggle { display: none !important; }
+  .ms-section-folded { display: block !important; }
   html body.ms-root { background: white; color: black; }
   .ms-main { display: block; }
   .ms-preview { padding: 0; }
-  .ms-prose > * { max-inline-size: none; }
+  .ms-prose > *:not(.ms-section),
+  .ms-section > *:not(.ms-section):not(.ms-code):not(.ms-table-wrap):not(.ms-diagram):not(.ms-diagram-error):not(.ms-plantuml) {
+    max-inline-size: none;
+  }
   .ms-prose .ms-table-wrap, .ms-prose .ms-code { overflow: visible; background: #f6f6f6; }
   .ms-prose a { color: black; text-decoration: underline; }
   .ms-prose a[href^='http']::after { content: ' (' attr(href) ')'; font-size: 0.8em; color: #555; }
